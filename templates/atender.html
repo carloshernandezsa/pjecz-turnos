@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block head %}
+	{{ super() }}
+{% endblock %}
+{% block content %}
+	<div id="wel" style="background-color: transparent; ">
+		<div class="container-fluid">
+			<div class="row p-5" style="background-color:#efeff1">
+				<div class="col-md-12 text-center">
+					<form action="" method="post">
+						<input type="hidden" name="csrf_token" id="csrf_token" value="{{csrf_token()}}">
+						{% if turnos %}
+						<a href="javascript:seleccionarTurno('','Atender',{{session['ventanilla']}})">
+							<input type="button" class="btn btn-success" value="Atender turno">
+						</a>
+						
+						{% else %}
+						<h1>No hay Turnos por atender</h1>
+						{% endif %}
+					</form>
+				</div>
+			</div>
+		</div>
+	  	<div class="container-fluid p-5"  >
+
+  			<div class="row" id="contenidoTurnos">
+  				<div class="col-md-8 offset-2" >
+
+					<div class="row" id="tablaTurnos">
+  						<table class="table table-striped" width="60%" border="1" align="top" cellpadding="20" cellspacing="0"  style="margin:0 auto">
+			    			<thead>
+						      <tr>
+						      	<td style="background-color:black; font-weight: bold; color:white; font-size:1em; border-collapse:collapse;" cellpadding="0" cellspacing="0" align="center" valign="top" width="25%">TURNO</td>
+						      	<td style="background-color:black; font-weight: bold; color:white; font-size:1em;" cellpadding="0" cellspacing="0" align="center" valign="middle" width="25%">ESTATUS</td>
+						      </tr>
+							</thead>
+							<tbody style="font-size:2em; text-align:center">
+								{% for datos in turnos %}
+								<tr>
+									<td>{{datos.NumTurno}}</td>
+									<td>En espera</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						  </table>
+					</div>
+  				</div>
+
+
+  			</div>
+
+		</div>
+	</div>
+
+{% endblock %}

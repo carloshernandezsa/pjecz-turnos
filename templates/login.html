@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block head %}
+	{{ super() }}
+{% endblock %}
+{% block content %}
+
+    <div class="wrapper fadeInDown">
+      <div id="formContent">
+        <!-- Tabs Titles -->
+
+        <!-- Icon -->
+        <div class="fadeIn first">
+          <img src="http://localhost:5000/static/img/img_login.png" id="icon" alt="PJECZ" />
+        </div>
+
+        <!-- Login Form -->
+        <form action="" method="post">
+          <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
+          <input type="text" id="usuario" class="fadeIn second" name="usuario" placeholder="usuario">
+          <input type="password" id="contrasena" class="fadeIn third" name="contrasena" placeholder="contraseña">
+          <input type="submit" class="fadeIn fourth" value="Ingresar">
+        </form>
+
+
+      </div>
+    </div>
+
+
+{% endblock %}

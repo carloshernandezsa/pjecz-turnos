@@ -1,0 +1,8 @@
+Flask
+Flask-Migrate
+psycopg2
+WTForms
+Flask-WTF
+dominate
+visitor
+mysqlclient
