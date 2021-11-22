@@ -25,5 +25,10 @@
       </div>
     </div>
 
+    {% if error == "Usuario no encontrado" %}
+      <script>
+        swal("Usuario no valido", "revise que el usuario y contraseña sean correctos", "warning");
+      </script>
+    {% endif %}
 
 {% endblock %}

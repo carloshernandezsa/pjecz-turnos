@@ -96,9 +96,10 @@ def login():
         contrasena = request.form['contrasena']
         
         user  = Usuarios.query.filter(Usuarios.Usuario == usuario , Usuarios.Password == contrasena).first()
-        ventanilla = Ventanilla.query.filter(Ventanilla.UsuarioId == user.UsuarioId).first()
+        numero_registros = Usuarios.query.filter(Usuarios.Usuario == usuario , Usuarios.Password == contrasena).count()
         
-        if(user):      
+        if(numero_registros>0):      
+            ventanilla = Ventanilla.query.filter(Ventanilla.UsuarioId == user.UsuarioId).first()
             session['JuzgadoId'] = user.JuzgadoId
             session['Oficina'] = session['juzgados'][user.JuzgadoId]
               
@@ -117,7 +118,7 @@ def login():
             session['nombre'] = user.Nombre + " " + user.ApellidoP + " " + user.ApellidoM
             return redirect(url_for('inicio'))
 
-    return render_template('login.html')
+    return render_template('login.html', error = "Usuario no encontrado")
 
 @app.route('/logout/')
 def logout():
