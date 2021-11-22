@@ -23,7 +23,7 @@
 								<tr>
 									<td>{{datos.NumTurno}}</td>
 									<td>Atendiendo</td>
-									<td><a href="javascript:seleccionarTurno({{datos.TurnoId}},'Concluir',{{session['ventanilla']}})"><button class="btn btn-warning" >Concluir turno</button></a></td>
+									<td><a href="javascript:seleccionarTurno({{datos.id}},'Concluir',{{session['ventanilla']}})"><button class="btn btn-warning" >Concluir turno</button></a></td>
 								</tr>
 								{% endfor %}
 							</tbody>

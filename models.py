@@ -2,7 +2,7 @@ from app import db
 
 
 class Turno(db.Model):
-    TurnoId = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     NumTurno = db.Column(db.Integer)
     TipoTurnoId = db.Column(db.Integer)
     JuzgadoId = db.Column(db.Integer)

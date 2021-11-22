@@ -117,8 +117,10 @@ def login():
             session['usuario'] = user.UsuarioId   
             session['nombre'] = user.Nombre + " " + user.ApellidoP + " " + user.ApellidoM
             return redirect(url_for('inicio'))
+        else:
+            return render_template('login.html', error="Usuario no encontrado")
 
-    return render_template('login.html', error = "Usuario no encontrado")
+    return render_template('login.html')
 
 @app.route('/logout/')
 def logout():
@@ -135,10 +137,10 @@ def logout():
 def pantalla():
     #Fecha actual
     hoy = datetime.today().strftime('%Y-%m-%d')
-    turnos = Turno.query.filter(Turno.EstatusTurnoId <= 2 , func.DATE(Turno.Fecha) == hoy, Turno.JuzgadoId == session['JuzgadoId'] ).order_by(Turno.TurnoId).limit(8).all() 
-    #registros = Turno.query.filter(Turno.VentanillaId == None , func.DATE(Turno.Fecha) == hoy ).order_by(Turno.TurnoId).limit(5).count()
+    turnos = Turno.query.filter(Turno.EstatusTurnoId <= 2 , func.DATE(Turno.Fecha) == hoy, Turno.JuzgadoId == session['JuzgadoId'] ).order_by(Turno.id).limit(8).all() 
+    #registros = Turno.query.filter(Turno.VentanillaId == None , func.DATE(Turno.Fecha) == hoy ).order_by(Turno.id).limit(5).count()
     turno = Turno.query.filter(Turno.EstatusTurnoId == 2, func.DATE(
-        Turno.Fecha) == hoy, Turno.JuzgadoId == session['JuzgadoId']).order_by(Turno.TurnoId.desc()).first()
+        Turno.Fecha) == hoy, Turno.JuzgadoId == session['JuzgadoId']).order_by(Turno.id.desc()).first()
     
     return render_template('pantalla.html', turno = turno, turnos = turnos)
 
@@ -157,7 +159,7 @@ def finalizar(id = 0):
     if id > 0 :
         #Actualizamos el estatus del turno
         try:
-            turno = Turno.query.filter(Turno.TurnoId == id).first()
+            turno = Turno.query.filter(Turno.id == id).first()
             turno.EstatusTurnoId = 3
             db.session.commit()
         except:
@@ -182,7 +184,7 @@ def atender(accion = None):
         except:
             print("error al marcar turno como recibido para atender")
     try:
-        turnos = Turno.query.filter(Turno.EstatusTurnoId == 1, func.DATE(Turno.Fecha) == hoy, Turno.JuzgadoId == session['JuzgadoId']).order_by(Turno.TurnoId).all()
+        turnos = Turno.query.filter(Turno.EstatusTurnoId == 1, func.DATE(Turno.Fecha) == hoy, Turno.JuzgadoId == session['JuzgadoId']).order_by(Turno.id).all()
     except:
         turnos = {"success":"sin registros"}
     return render_template('atender.html', turnos = turnos)
@@ -194,7 +196,7 @@ def concluir(id = 0):
     hoy = datetime.today().strftime('%Y-%m-%d')
     if(id>0):
         try:
-            turno = Turno.query.filter(Turno.TurnoId == id).first()
+            turno = Turno.query.filter(Turno.id == id).first()
             turno.EstatusTurnoId = 3
             turno.FechaTermino = datetime.now()
             db.session.commit()
@@ -202,7 +204,7 @@ def concluir(id = 0):
         except:
             print("error al marcar turno como ATENDIDO (3)")
     try:
-        turnos = Turno.query.filter(Turno.EstatusTurnoId == 2, func.DATE(Turno.Fecha) == hoy, Turno.VentanillaId == session['ventanilla']).order_by(Turno.TurnoId).limit(5).all()
+        turnos = Turno.query.filter(Turno.EstatusTurnoId == 2, func.DATE(Turno.Fecha) == hoy, Turno.VentanillaId == session['ventanilla']).order_by(Turno.id).limit(5).all()
     except:
         turnos = {"success":"sin registros"}
     return render_template('concluir.html', turnos = turnos)
@@ -236,6 +238,8 @@ def nuevo(accion = None):
             db.session.commit()
             print("se agregara un nuevo turno en la tabla")
             accion=""
+            #handelMessage({'id' : 0, 'accion' : '', 'usuario' : session['usuario']})
+            socketio.send('message')
             return redirect(url_for('nuevo'))
      
     data =  consultar_turnos()
@@ -255,7 +259,7 @@ def consultar_turnos():
     # Fecha actual
     hoy = datetime.today().strftime('%Y-%m-%d')
     
-    turnos = Turno.query.filter(Turno.EstatusTurnoId <=2, func.DATE(Turno.Fecha) == hoy, Turno.JuzgadoId == session['JuzgadoId']).order_by(Turno.TurnoId).all()
+    turnos = Turno.query.filter(Turno.EstatusTurnoId <=2, func.DATE(Turno.Fecha) == hoy, Turno.JuzgadoId == session['JuzgadoId']).order_by(Turno.id).all()
     data = {}
     pp = pprint.PrettyPrinter(indent=4)
     if(turnos):

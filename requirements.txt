@@ -6,3 +6,5 @@ Flask-WTF
 dominate
 visitor
 mysqlclient
+socketio
+flask_socketio
