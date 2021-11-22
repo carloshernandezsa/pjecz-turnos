@@ -15,16 +15,14 @@ class Turno(db.Model):
     comentarios = db.Column(db.String(250))
     
 class Usuarios(db.Model):
-    UsuarioId = db.Column(db.Integer, primary_key=True)
-    Nombre = db.Column(db.String(45))
-    ApellidoP = db.Column(db.String(45))
-    ApellidoM = db.Column(db.String(45))
-    NumEmpleado = db.Column(db.Integer)
-    Usuario = db.Column(db.String(45))
-    Password = db.Column(db.String(45))
-    RolId = db.Column(db.Integer)
-    JuzgadoId = db.Column(db.Integer)
-    EstatusId = db.Column(db.Integer)
+    id = db.Column(db.Integer, primary_key=True)
+    nombres = db.Column(db.String(45))
+    apellido_paterno = db.Column(db.String(45))
+    apellido_materno = db.Column(db.String(45))
+    usuario = db.Column(db.String(45))
+    password = db.Column(db.String(45))
+    rol_id = db.Column(db.Integer)
+    autoridad_id = db.Column(db.Integer)
     
 
 class Ventanilla(db.Model):
@@ -34,7 +32,9 @@ class Ventanilla(db.Model):
     JuzgadoId = db.Column(db.Integer)
     EstatusId = db.Column(db.Integer)
     
-class Juzgados(db.Model):
-    JuzgadoId = db.Column(db.Integer, primary_key=True)
-    Juzgado = db.Column(db.String(50))
-    DistritoId = db.Column(db.Integer)
+class Autoridades(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    descripcion = db.Column(db.String(50))
+    descripcion_corta = db.Column(db.String(50))
+    distrito_id = db.Column(db.Integer)
+    clave = db.Column(db.Integer)

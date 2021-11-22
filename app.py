@@ -95,28 +95,28 @@ def login():
         usuario = request.form['usuario']
         contrasena = request.form['contrasena']
         
-        user  = Usuarios.query.filter(Usuarios.Usuario == usuario , Usuarios.Password == contrasena).first()
-        numero_registros = Usuarios.query.filter(Usuarios.Usuario == usuario , Usuarios.Password == contrasena).count()
+        user  = Usuarios.query.filter(Usuarios.usuario == usuario , Usuarios.password == contrasena).first()
+        numero_registros = Usuarios.query.filter(Usuarios.usuario == usuario , Usuarios.password == contrasena).count()
         
         if(numero_registros>0):      
-            ventanilla = Ventanilla.query.filter(Ventanilla.UsuarioId == user.UsuarioId).first()
-            session['JuzgadoId'] = user.JuzgadoId
-            session['Oficina'] = session['juzgados'][user.JuzgadoId]
+            ventanilla = Ventanilla.query.filter(Ventanilla.UsuarioId == user.id).first()
+            session['AutoridadId'] = user.autoridad_id
+            session['Oficina'] = session['juzgados'][user.autoridad_id]
               
-            print(f'Usuario que se firmo: {user.Nombre} {user.ApellidoP} {user.ApellidoM} ')
-            if user.RolId == 1:
+            print(f'Usuario que se firmo: {user.nombres} {user.apellido_paterno} {user.apellido_materno} ')
+            if user.rol_id == 1:
                 session['pagina'] = '/nuevo/'
                 session['ventanilla'] = 0
-            if user.RolId == 2:
+            if user.rol_id == 2:
                 session['pagina'] = '/atender/'
                 session['ventanilla'] = ventanilla.VentanillaId
-            if user.RolId == 5:
+            if user.rol_id == 5:
                 session['pagina'] = '/pantalla/'
                 session['ventanilla'] = 0
                 
-            session['usuario'] = user.UsuarioId   
-            session['nombre'] = user.Nombre + " " + user.ApellidoP + " " + user.ApellidoM
-            session['rol'] = user.RolId
+            session['usuario'] = user.id   
+            session['nombre'] = user.nombres + " " + user.apellido_paterno + " " + user.apellido_materno
+            session['rol'] = user.rol_id
             return redirect(url_for('inicio'))
         else:
             return render_template('login.html', error="Usuario no encontrado")
@@ -141,10 +141,10 @@ def pantalla():
     if 'rol' in session and session['rol']==5: # Rol de usuario de Pantalla
         #Fecha actual
         hoy = datetime.today().strftime('%Y-%m-%d')
-        turnos = Turno.query.filter(Turno.estado <= 2 , func.DATE(Turno.creado) == hoy, Turno.juzgado_id == session['JuzgadoId'] ).order_by(Turno.id).limit(8).all() 
+        turnos = Turno.query.filter(Turno.estado <= 2 , func.DATE(Turno.creado) == hoy, Turno.juzgado_id == session['AutoridadId'] ).order_by(Turno.id).limit(8).all() 
         #registros = Turno.query.filter(Turno.ventanilla_id == None , func.DATE(Turno.creado) == hoy ).order_by(Turno.id).limit(5).count()
         turno = Turno.query.filter(Turno.estado == 2, func.DATE(
-            Turno.creado) == hoy, Turno.juzgado_id == session['JuzgadoId']).order_by(Turno.id.desc()).first()
+            Turno.creado) == hoy, Turno.juzgado_id == session['AutoridadId']).order_by(Turno.id.desc()).first()
         
         return render_template('pantalla.html', turno = turno, turnos = turnos)
     return redirect(url_for('login'))
@@ -181,7 +181,7 @@ def atender(accion = None):
         if(accion=="Atender"):
             try:
                 print('*************************************************** Seleccion de un turno para ATENDER ************************ ')
-                turno = Turno.query.filter(and_(Turno.estado == 1 , func.DATE(Turno.creado) == hoy , Turno.juzgado_id == session['JuzgadoId'], or_(Turno.tipo == 1, Turno.tipo == 2))).order_by(Turno.tipo.desc(), Turno.numero.asc()).first()
+                turno = Turno.query.filter(and_(Turno.estado == 1 , func.DATE(Turno.creado) == hoy , Turno.juzgado_id == session['AutoridadId'], or_(Turno.tipo == 1, Turno.tipo == 2))).order_by(Turno.tipo.desc(), Turno.numero.asc()).first()
                 turno.estado = 2
                 turno.VentanillaId = session['ventanilla']
                 turno.atencion = datetime.now()
@@ -190,7 +190,7 @@ def atender(accion = None):
             except:
                 print("error al marcar turno como recibido para atender")
         try:
-            turnos = Turno.query.filter(Turno.estado == 1, func.DATE(Turno.creado) == hoy, Turno.juzgado_id == session['JuzgadoId']).order_by(Turno.id).all()
+            turnos = Turno.query.filter(Turno.estado == 1, func.DATE(Turno.creado) == hoy, Turno.juzgado_id == session['AutoridadId']).order_by(Turno.id).all()
         except:
             turnos = {"success":"sin registros"}
         return render_template('atender.html', turnos = turnos)
@@ -230,7 +230,7 @@ def nuevo(accion = None):
                 
                 #Registrar nuevo renglon en la tabla de turnos
                 hoy = datetime.today().strftime('%Y-%m-%d')
-                turno = Turno.query.filter(func.DATE(Turno.creado) == hoy, Turno.juzgado_id == session['JuzgadoId']).order_by(Turno.numero.desc()).first()
+                turno = Turno.query.filter(func.DATE(Turno.creado) == hoy, Turno.juzgado_id == session['AutoridadId']).order_by(Turno.numero.desc()).first()
                 if(turno):
                     maximo = turno.numero + 1
                 else:
@@ -243,7 +243,7 @@ def nuevo(accion = None):
                 turno.estado = 1
                 turno.comentarios = request.form['comentarios']
                 turno.tipo = request.form['tipo']
-                turno.juzgado_id = session['JuzgadoId']
+                turno.juzgado_id = session['autoridad_id']
                 
                 db.session.add(turno)
                 db.session.commit()
