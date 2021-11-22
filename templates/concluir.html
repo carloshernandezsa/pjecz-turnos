@@ -21,7 +21,7 @@
 							<tbody style="font-size:2em; text-align:center">
 								{% for datos in turnos %}
 								<tr>
-									<td>{{datos.NumTurno}}</td>
+									<td>{{datos.numero}}</td>
 									<td>Atendiendo</td>
 									<td><a href="javascript:seleccionarTurno({{datos.id}},'Concluir',{{session['ventanilla']}})"><button class="btn btn-warning" >Concluir turno</button></a></td>
 								</tr>

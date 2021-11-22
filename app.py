@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, url_for, session
 from flask_socketio import SocketIO, send
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
-from sqlalchemy import func, inspect, or_, and_
+from sqlalchemy import func, or_, and_
 from werkzeug.utils import redirect
 from datetime import datetime
 
@@ -36,7 +36,7 @@ NAME_DB = "pjecz_sistema_turnos"
 FULL_URL_DB = f"mysql://{USER_DB}:{PASS_DB}@{URL_DB}/{NAME_DB}"
 
 app.config['SQLALCHEMY_DATABASE_URI'] = FULL_URL_DB
-app.config['SLQALCHEMY_TRACK_MODIFICATIONS'] = True
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config["SQLALCHEMY_ECHO"] = True ## Mostrar consultas SQL en pantalla
 
 #inicializar conexion a base de datos
@@ -116,6 +116,7 @@ def login():
                 
             session['usuario'] = user.UsuarioId   
             session['nombre'] = user.Nombre + " " + user.ApellidoP + " " + user.ApellidoM
+            session['rol'] = user.RolId
             return redirect(url_for('inicio'))
         else:
             return render_template('login.html', error="Usuario no encontrado")
@@ -130,19 +131,23 @@ def logout():
     session.pop('nombre',None)
     session.pop('comentarios',None)
     session.pop('tipo', None)
+    session.pop('rol',None)
+    session.clear()
     return redirect(url_for('login'))
 
 
 @app.route('/pantalla/')
 def pantalla():
-    #Fecha actual
-    hoy = datetime.today().strftime('%Y-%m-%d')
-    turnos = Turno.query.filter(Turno.EstatusTurnoId <= 2 , func.DATE(Turno.Fecha) == hoy, Turno.JuzgadoId == session['JuzgadoId'] ).order_by(Turno.id).limit(8).all() 
-    #registros = Turno.query.filter(Turno.VentanillaId == None , func.DATE(Turno.Fecha) == hoy ).order_by(Turno.id).limit(5).count()
-    turno = Turno.query.filter(Turno.EstatusTurnoId == 2, func.DATE(
-        Turno.Fecha) == hoy, Turno.JuzgadoId == session['JuzgadoId']).order_by(Turno.id.desc()).first()
-    
-    return render_template('pantalla.html', turno = turno, turnos = turnos)
+    if 'rol' in session and session['rol']==5: # Rol de usuario de Pantalla
+        #Fecha actual
+        hoy = datetime.today().strftime('%Y-%m-%d')
+        turnos = Turno.query.filter(Turno.estado <= 2 , func.DATE(Turno.creado) == hoy, Turno.juzgado_id == session['JuzgadoId'] ).order_by(Turno.id).limit(8).all() 
+        #registros = Turno.query.filter(Turno.ventanilla_id == None , func.DATE(Turno.creado) == hoy ).order_by(Turno.id).limit(5).count()
+        turno = Turno.query.filter(Turno.estado == 2, func.DATE(
+            Turno.creado) == hoy, Turno.juzgado_id == session['JuzgadoId']).order_by(Turno.id.desc()).first()
+        
+        return render_template('pantalla.html', turno = turno, turnos = turnos)
+    return redirect(url_for('login'))
 
 
 @app.route('/consultar_usuario/', methods = ['GET','POST'])
@@ -160,7 +165,7 @@ def finalizar(id = 0):
         #Actualizamos el estatus del turno
         try:
             turno = Turno.query.filter(Turno.id == id).first()
-            turno.EstatusTurnoId = 3
+            turno.estado = 3
             db.session.commit()
         except:
             pass
@@ -169,105 +174,112 @@ def finalizar(id = 0):
 @app.route('/atender/', methods=['GET'])
 @app.route('/atender/<accion>', methods=['GET','POST'])
 def atender(accion = None):
-    #Fecha actual
-    hoy = datetime.today().strftime('%Y-%m-%d')
-    print(f'valor de accion {accion}')
-    if(accion=="Atender"):
+    if 'rol' in session and session['rol'] == 2:  # Rol de usuario de Recepción
+        #Fecha actual
+        hoy = datetime.today().strftime('%Y-%m-%d')
+        print(f'valor de accion {accion}')
+        if(accion=="Atender"):
+            try:
+                print('*************************************************** Seleccion de un turno para ATENDER ************************ ')
+                turno = Turno.query.filter(and_(Turno.estado == 1 , func.DATE(Turno.creado) == hoy , Turno.juzgado_id == session['JuzgadoId'], or_(Turno.tipo == 1, Turno.tipo == 2))).order_by(Turno.tipo.desc(), Turno.numero.asc()).first()
+                turno.estado = 2
+                turno.VentanillaId = session['ventanilla']
+                turno.atencion = datetime.now()
+                db.session.commit()
+                return redirect(url_for('concluir'))
+            except:
+                print("error al marcar turno como recibido para atender")
         try:
-            print('*************************************************** Seleccion de un turno para ATENDER ************************ ')
-            turno = Turno.query.filter(and_(Turno.EstatusTurnoId == 1 , func.DATE(Turno.Fecha) == hoy , Turno.JuzgadoId == session['JuzgadoId'], or_(Turno.TipoTurnoId == 1, Turno.TipoTurnoId == 2))).order_by(Turno.TipoTurnoId.desc(), Turno.NumTurno.asc()).first()
-            turno.EstatusTurnoId = 2
-            turno.VentanillaId = session['ventanilla']
-            turno.FechaAtencion = datetime.now()
-            db.session.commit()
-            return redirect(url_for('concluir'))
+            turnos = Turno.query.filter(Turno.estado == 1, func.DATE(Turno.creado) == hoy, Turno.juzgado_id == session['JuzgadoId']).order_by(Turno.id).all()
         except:
-            print("error al marcar turno como recibido para atender")
-    try:
-        turnos = Turno.query.filter(Turno.EstatusTurnoId == 1, func.DATE(Turno.Fecha) == hoy, Turno.JuzgadoId == session['JuzgadoId']).order_by(Turno.id).all()
-    except:
-        turnos = {"success":"sin registros"}
-    return render_template('atender.html', turnos = turnos)
+            turnos = {"success":"sin registros"}
+        return render_template('atender.html', turnos = turnos)
+    return redirect(url_for('login'))
+
 
 @app.route('/concluir/', methods=['GET'])
 @app.route('/concluir/<int:id>', methods=['GET','POST'])
 def concluir(id = 0):
-    #Fecha actual
-    hoy = datetime.today().strftime('%Y-%m-%d')
-    if(id>0):
+    if 'rol' in session and session['rol'] == 2:  # Rol de usuario de Atención al público
+        #Fecha actual
+        hoy = datetime.today().strftime('%Y-%m-%d')
+        if(id>0):
+            try:
+                turno = Turno.query.filter(Turno.id == id).first()
+                turno.estado = 3
+                turno.termino = datetime.now()
+                db.session.commit()
+                return redirect(url_for('atender'))
+            except:
+                print("error al marcar turno como ATENDIDO (3)")
         try:
-            turno = Turno.query.filter(Turno.id == id).first()
-            turno.EstatusTurnoId = 3
-            turno.FechaTermino = datetime.now()
-            db.session.commit()
-            return redirect(url_for('atender'))
+            turnos = Turno.query.filter(Turno.estado == 2, func.DATE(Turno.creado) == hoy, Turno.ventanilla_id == session['ventanilla']).order_by(Turno.id).limit(5).all()
         except:
-            print("error al marcar turno como ATENDIDO (3)")
-    try:
-        turnos = Turno.query.filter(Turno.EstatusTurnoId == 2, func.DATE(Turno.Fecha) == hoy, Turno.VentanillaId == session['ventanilla']).order_by(Turno.id).limit(5).all()
-    except:
-        turnos = {"success":"sin registros"}
-    return render_template('concluir.html', turnos = turnos)
+            turnos = {"success":"sin registros"}
+        return render_template('concluir.html', turnos = turnos)
+    return redirect(url_for('login'))
 
 @app.route('/nuevo/', methods=['GET','POST'])
 @app.route('/nuevo/<accion>',methods=['GET','POST'])
 def nuevo(accion = None):
-    if(request.method == 'POST'):
-        print(f' ***********---------------------- Inicia proceso de alta {request.form["accion"]}')
-        #print(f'######################  Accion: {accion} , Usuario Firmado:{session["usuario"]} ')
-        if(request.form['accion']=="Nuevo turno"):
-            
-            #Registrar nuevo renglon en la tabla de turnos
-            hoy = datetime.today().strftime('%Y-%m-%d')
-            turno  = Turno.query.filter(func.DATE(Turno.Fecha) == hoy, Turno.JuzgadoId == session['JuzgadoId']).order_by(Turno.NumTurno.desc()).first()
-            if(turno):
-                maximo = turno.NumTurno + 1
-            else:
-                maximo = 1
-            
-            turno = Turno()
-            turno.NumTurno = maximo
-            turno.Fecha =  datetime.now()
-            turno.UsuarioId = session['usuario']
-            turno.EstatusTurnoId = 1
-            turno.Comentarios = request.form['comentarios']
-            turno.TipoTurnoId = request.form['tipo']
-            turno.JuzgadoId = session['JuzgadoId']
-            
-            db.session.add(turno)
-            db.session.commit()
-            print("se agregara un nuevo turno en la tabla")
-            accion=""
-            #handelMessage({'id' : 0, 'accion' : '', 'usuario' : session['usuario']})
-            socketio.send('message')
-            return redirect(url_for('nuevo'))
-     
-    data =  consultar_turnos()
-    turno = Turno()
-    turnoForm = TurnoForm(obj=turno)
-    if(data):
-        #, forma=turnoForm
-        return render_template('nuevo.html', turnos=data) 
-    else:
-        #, forma=turnoForm
-        return render_template('nuevo.html', turnos={'NumTurno': '', 'EstatusTurnoId': '', 'VentanillaId': ''})
-
+    if 'rol' in session and session['rol'] == 1:  # Rol de usuario de Recepción
+        if(request.method == 'POST'):
+            print(f' ***********---------------------- Inicia proceso de alta {request.form["accion"]}')
+            #print(f'######################  Accion: {accion} , Usuario Firmado:{session["usuario"]} ')
+            if(request.form['accion']=="Nuevo turno"):
+                
+                #Registrar nuevo renglon en la tabla de turnos
+                hoy = datetime.today().strftime('%Y-%m-%d')
+                turno = Turno.query.filter(func.DATE(Turno.creado) == hoy, Turno.juzgado_id == session['JuzgadoId']).order_by(Turno.numero.desc()).first()
+                if(turno):
+                    maximo = turno.numero + 1
+                else:
+                    maximo = 1
+                
+                turno = Turno()
+                turno.numero = maximo
+                turno.creado =  datetime.now()
+                turno.usuario_id = session['usuario']
+                turno.estado = 1
+                turno.comentarios = request.form['comentarios']
+                turno.tipo = request.form['tipo']
+                turno.juzgado_id = session['JuzgadoId']
+                
+                db.session.add(turno)
+                db.session.commit()
+                print("se agregara un nuevo turno en la tabla")
+                accion=""
+                #handelMessage({'id' : 0, 'accion' : '', 'usuario' : session['usuario']})
+                socketio.send('message')
+                return redirect(url_for('nuevo'))
+        
+        data =  consultar_turnos()
+        turno = Turno()
+        turnoForm = TurnoForm(obj=turno)
+        if(data):
+            #, forma=turnoForm
+            return render_template('nuevo.html', turnos=data) 
+        else:
+            #, forma=turnoForm
+            return render_template('nuevo.html', turnos={'numero': '', 'estado': '', 'VentanillaId': ''})
+    return redirect(url_for('login'))
 
     
 @app.route('/consultar_turnos/', methods = ['GET','POST'])
 def consultar_turnos():
-    # Fecha actual
-    hoy = datetime.today().strftime('%Y-%m-%d')
-    
-    turnos = Turno.query.filter(Turno.EstatusTurnoId <=2, func.DATE(Turno.Fecha) == hoy, Turno.JuzgadoId == session['JuzgadoId']).order_by(Turno.id).all()
-    data = {}
-    pp = pprint.PrettyPrinter(indent=4)
-    if(turnos):
-        for datos in turnos:
-            #pp.pprint(datos.__dict__)
-            print('')
-        return turnos 
+    if 'usuario' in session:
+        # Fecha actual
+        hoy = datetime.today().strftime('%Y-%m-%d')
         
-    print(type(data))
-    #print(json.dumps(objeto))    
-    
+        turnos = Turno.query.filter(Turno.estado <= 2, func.DATE(Turno.creado) == hoy, Turno.juzgado_id == session['JuzgadoId']).order_by(Turno.id).all()
+        data = {}
+        pp = pprint.PrettyPrinter(indent=4)
+        if(turnos):
+            for datos in turnos:
+                #pp.pprint(datos.__dict__)
+                print('')
+            return turnos 
+            
+        print(type(data))
+        #print(json.dumps(objeto))    
+    return redirect(url_for('login'))

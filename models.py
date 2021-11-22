@@ -3,16 +3,16 @@ from app import db
 
 class Turno(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    NumTurno = db.Column(db.Integer)
-    TipoTurnoId = db.Column(db.Integer)
-    JuzgadoId = db.Column(db.Integer)
-    Fecha = db.Column(db.DateTime)
-    FechaAtencion = db.Column(db.DateTime , nullable=True)
-    FechaTermino = db.Column(db.DateTime , nullable=True)
-    UsuarioId = db.Column(db.Integer)
-    VentanillaId = db.Column(db.Integer)
-    EstatusTurnoId = db.Column(db.Integer)
-    Comentarios = db.Column(db.String(250))
+    usuario_id = db.Column(db.Integer)
+    numero = db.Column(db.Integer)
+    tipo = db.Column(db.Integer)
+    juzgado_id = db.Column(db.Integer)
+    creado = db.Column(db.DateTime)
+    atencion = db.Column(db.DateTime , nullable=True)
+    termino = db.Column(db.DateTime , nullable=True)
+    ventanilla_id = db.Column(db.Integer)
+    estado = db.Column(db.Integer)
+    comentarios = db.Column(db.String(250))
     
 class Usuarios(db.Model):
     UsuarioId = db.Column(db.Integer, primary_key=True)

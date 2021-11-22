@@ -69,12 +69,12 @@
 								
 									{% for datos in turnos %}
 									<tr>
-										<td>{{datos.NumTurno}}</td>
-										{% if datos.EstatusTurnoId == 2 %}
-										<td>{{datos.VentanillaId}}</td>
+										<td>{{datos.numero}}</td>
+										{% if datos.estado == 2 %}
+										<td>{{datos.ventanilla_id}}</td>
 										<td>Atendiendo</td>
 										{% endif %}
-										{% if datos.EstatusTurnoId == 1 %}
+										{% if datos.estado == 1 %}
 										<td colspan="2">En espera</td>
 										{% endif %}
 									</tr>
