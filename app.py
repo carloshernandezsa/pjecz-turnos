@@ -1,6 +1,11 @@
 import json
 import random
-import pprint ## impresion estilizada en consola
+import pprint
+import pdfkit 
+import base64 
+
+from jinja2.loaders import FileSystemLoader  ## impresion estilizada en consola
+from jinja2 import Environment
 
 from flask import Flask, render_template, request, url_for, session
 from flask_socketio import SocketIO, send
@@ -100,7 +105,7 @@ def login():
         
         if(numero_registros>0):      
             ventanilla = Ventanilla.query.filter(Ventanilla.UsuarioId == user.id).first()
-            session['AutoridadId'] = user.autoridad_id
+            session['autoridad_id'] = user.autoridad_id
             session['Oficina'] = session['juzgados'][user.autoridad_id]
               
             print(f'Usuario que se firmo: {user.nombres} {user.apellido_paterno} {user.apellido_materno} ')
@@ -141,10 +146,10 @@ def pantalla():
     if 'rol' in session and session['rol']==5: # Rol de usuario de Pantalla
         #Fecha actual
         hoy = datetime.today().strftime('%Y-%m-%d')
-        turnos = Turno.query.filter(Turno.estado <= 2 , func.DATE(Turno.creado) == hoy, Turno.juzgado_id == session['AutoridadId'] ).order_by(Turno.id).limit(8).all() 
+        turnos = Turno.query.filter(Turno.estado <= 2 , func.DATE(Turno.creado) == hoy, Turno.autoridad_id == session['autoridad_id'] ).order_by(Turno.id).limit(8).all() 
         #registros = Turno.query.filter(Turno.ventanilla_id == None , func.DATE(Turno.creado) == hoy ).order_by(Turno.id).limit(5).count()
         turno = Turno.query.filter(Turno.estado == 2, func.DATE(
-            Turno.creado) == hoy, Turno.juzgado_id == session['AutoridadId']).order_by(Turno.id.desc()).first()
+            Turno.creado) == hoy, Turno.autoridad_id == session['autoridad_id']).order_by(Turno.id.desc()).first()
         
         return render_template('pantalla.html', turno = turno, turnos = turnos)
     return redirect(url_for('login'))
@@ -181,7 +186,7 @@ def atender(accion = None):
         if(accion=="Atender"):
             try:
                 print('*************************************************** Seleccion de un turno para ATENDER ************************ ')
-                turno = Turno.query.filter(and_(Turno.estado == 1 , func.DATE(Turno.creado) == hoy , Turno.juzgado_id == session['AutoridadId'], or_(Turno.tipo == 1, Turno.tipo == 2))).order_by(Turno.tipo.desc(), Turno.numero.asc()).first()
+                turno = Turno.query.filter(and_(Turno.estado == 1 , func.DATE(Turno.creado) == hoy , Turno.autoridad_id == session['autoridad_id'], or_(Turno.tipo == 1, Turno.tipo == 2))).order_by(Turno.tipo.desc(), Turno.numero.asc()).first()
                 turno.estado = 2
                 turno.VentanillaId = session['ventanilla']
                 turno.atencion = datetime.now()
@@ -190,7 +195,7 @@ def atender(accion = None):
             except:
                 print("error al marcar turno como recibido para atender")
         try:
-            turnos = Turno.query.filter(Turno.estado == 1, func.DATE(Turno.creado) == hoy, Turno.juzgado_id == session['AutoridadId']).order_by(Turno.id).all()
+            turnos = Turno.query.filter(Turno.estado == 1, func.DATE(Turno.creado) == hoy, Turno.autoridad_id == session['autoridad_id']).order_by(Turno.id).all()
         except:
             turnos = {"success":"sin registros"}
         return render_template('atender.html', turnos = turnos)
@@ -230,7 +235,7 @@ def nuevo(accion = None):
                 
                 #Registrar nuevo renglon en la tabla de turnos
                 hoy = datetime.today().strftime('%Y-%m-%d')
-                turno = Turno.query.filter(func.DATE(Turno.creado) == hoy, Turno.juzgado_id == session['AutoridadId']).order_by(Turno.numero.desc()).first()
+                turno = Turno.query.filter(func.DATE(Turno.creado) == hoy, Turno.autoridad_id == session['autoridad_id']).order_by(Turno.numero.desc()).first()
                 if(turno):
                     maximo = turno.numero + 1
                 else:
@@ -243,7 +248,7 @@ def nuevo(accion = None):
                 turno.estado = 1
                 turno.comentarios = request.form['comentarios']
                 turno.tipo = request.form['tipo']
-                turno.juzgado_id = session['autoridad_id']
+                turno.autoridad_id = session['autoridad_id']
                 
                 db.session.add(turno)
                 db.session.commit()
@@ -257,7 +262,7 @@ def nuevo(accion = None):
         turno = Turno()
         turnoForm = TurnoForm(obj=turno)
         print('tipo de dato regresado' , type(data))
-        if(type(data)=="list"):
+        if(isinstance(data,list)):
             #, forma=turnoForm
             return render_template('nuevo.html', turnos=data) 
         else:
@@ -272,7 +277,7 @@ def consultar_turnos():
         # Fecha actual
         hoy = datetime.today().strftime('%Y-%m-%d')
         print('************************* inicia consulta de turnos por dia *****************************')
-        turnos = Turno.query.filter(Turno.estado <= 2, func.DATE(Turno.creado) == hoy, Turno.autoridad_id == session['AutoridadId']).order_by(Turno.id).all()
+        turnos = Turno.query.filter(Turno.estado <= 2, func.DATE(Turno.creado) == hoy, Turno.autoridad_id == session['autoridad_id']).order_by(Turno.id).all()
         data = {}
         pp = pprint.PrettyPrinter(indent=4)
         if(turnos):
@@ -284,3 +289,56 @@ def consultar_turnos():
         print(type(turnos))
         #print(json.dumps(objeto))    
     return redirect(url_for('login'))
+
+
+@app.route('/crearPDF/', methods = ['GET', 'POST'])
+def crearPDF():
+    entorno = Environment(
+        loader=FileSystemLoader('templates'),
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
+    
+    tiempo = datetime.now()
+    archivo = 'static/img/img_escudo.png'
+    imagen = open(archivo, 'rb')
+    imagen_read = imagen.read()
+    imagen_64_encode = base64.encodebytes(imagen_read)
+
+    pdf_plantilla = entorno.get_template("pdf_body.html")
+    pdf_html = pdf_plantilla.render(
+        turno=3,
+        fecha=formato_fecha(datetime.now()),
+        hora= f'{tiempo.hour} : {tiempo.minute} : {tiempo.second}' ,
+        imagen = imagen_64_encode
+    )
+    
+    config = pdfkit.configuration(wkhtmltopdf='C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
+    options = {
+        "enable-local-file-access": None
+    }
+    # Crear archivo PDF 
+    try:
+        pdf = pdfkit.from_string(pdf_html, 'turno.pdf', configuration=config, options=options)
+        return "pdf generado correctamente"
+    except IOError as error:
+        mensaje = str(error)
+        print(f'Error: {mensaje}')
+        return "Error : ",mensaje
+    
+
+def formato_fecha(date = datetime.now()):
+    dias = ("Lunes","Martes","Miercoles","Jueves","Viernes","Sabado","Domingo")
+    meses = ("Enero", "Febrero", "Marzo", "Abri", "Mayo", "Junio", "Julio",
+              "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre")
+    
+    dia_semana = date.weekday()
+    dia = date.day
+    mes = meses[date.month - 1]
+    anio = date.year
+    letra = dias[dia_semana]
+    messsage = "{}, {} de {} del {}".format(letra, dia, mes, anio)
+
+    return messsage
+
+

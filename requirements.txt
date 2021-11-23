@@ -8,3 +8,4 @@ visitor
 mysqlclient
 socketio
 flask_socketio
+pdfkit
