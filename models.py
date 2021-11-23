@@ -6,7 +6,7 @@ class Turno(db.Model):
     usuario_id = db.Column(db.Integer)
     numero = db.Column(db.Integer)
     tipo = db.Column(db.Integer)
-    juzgado_id = db.Column(db.Integer)
+    autoridad_id = db.Column(db.Integer)
     creado = db.Column(db.DateTime)
     atencion = db.Column(db.DateTime , nullable=True)
     termino = db.Column(db.DateTime , nullable=True)

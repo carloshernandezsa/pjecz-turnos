@@ -256,12 +256,13 @@ def nuevo(accion = None):
         data =  consultar_turnos()
         turno = Turno()
         turnoForm = TurnoForm(obj=turno)
-        if(data):
+        print('tipo de dato regresado' , type(data))
+        if(type(data)=="list"):
             #, forma=turnoForm
             return render_template('nuevo.html', turnos=data) 
         else:
             #, forma=turnoForm
-            return render_template('nuevo.html', turnos={'numero': '', 'estado': '', 'VentanillaId': ''})
+            return render_template('nuevo.html', turnos={})
     return redirect(url_for('login'))
 
     
@@ -270,16 +271,16 @@ def consultar_turnos():
     if 'usuario' in session:
         # Fecha actual
         hoy = datetime.today().strftime('%Y-%m-%d')
-        
-        turnos = Turno.query.filter(Turno.estado <= 2, func.DATE(Turno.creado) == hoy, Turno.juzgado_id == session['JuzgadoId']).order_by(Turno.id).all()
+        print('************************* inicia consulta de turnos por dia *****************************')
+        turnos = Turno.query.filter(Turno.estado <= 2, func.DATE(Turno.creado) == hoy, Turno.autoridad_id == session['AutoridadId']).order_by(Turno.id).all()
         data = {}
         pp = pprint.PrettyPrinter(indent=4)
         if(turnos):
             for datos in turnos:
                 #pp.pprint(datos.__dict__)
-                print('')
+                print('registro')
             return turnos 
             
-        print(type(data))
+        print(type(turnos))
         #print(json.dumps(objeto))    
     return redirect(url_for('login'))
