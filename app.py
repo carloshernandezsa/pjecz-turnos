@@ -7,8 +7,8 @@ import base64
 from jinja2.loaders import FileSystemLoader  ## impresion estilizada en consola
 from jinja2 import Environment
 
-from flask import Flask, render_template, request, url_for, session
-from flask_socketio import SocketIO, send
+from flask import Flask, render_template, request, url_for, session, make_response
+from flask_socketio import SocketIO, send, emit
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import func, or_, and_
@@ -18,7 +18,7 @@ from datetime import datetime
 
 from database import db
 from forms import TurnoForm
-from models import Turno, Usuarios, Ventanilla
+from models import Turno, Usuarios, Ventanilla, Departamentos
 
 #CSRF Protect
 csrf = CSRFProtect()
@@ -104,7 +104,7 @@ def login():
         numero_registros = Usuarios.query.filter(Usuarios.usuario == usuario , Usuarios.password == contrasena).count()
         
         if(numero_registros>0):      
-            ventanilla = Ventanilla.query.filter(Ventanilla.UsuarioId == user.id).first()
+            ventanilla = Ventanilla.query.filter(Ventanilla.usuario_id == user.id).first()
             session['autoridad_id'] = user.autoridad_id
             session['Oficina'] = session['juzgados'][user.autoridad_id]
               
@@ -114,7 +114,7 @@ def login():
                 session['ventanilla'] = 0
             if user.rol_id == 2:
                 session['pagina'] = '/atender/'
-                session['ventanilla'] = ventanilla.VentanillaId
+                session['ventanilla'] = ventanilla.id
             if user.rol_id == 5:
                 session['pagina'] = '/pantalla/'
                 session['ventanilla'] = 0
@@ -148,8 +148,7 @@ def pantalla():
         hoy = datetime.today().strftime('%Y-%m-%d')
         turnos = Turno.query.filter(Turno.estado <= 2 , func.DATE(Turno.creado) == hoy, Turno.autoridad_id == session['autoridad_id'] ).order_by(Turno.id).limit(8).all() 
         #registros = Turno.query.filter(Turno.ventanilla_id == None , func.DATE(Turno.creado) == hoy ).order_by(Turno.id).limit(5).count()
-        turno = Turno.query.filter(Turno.estado == 2, func.DATE(
-            Turno.creado) == hoy, Turno.autoridad_id == session['autoridad_id']).order_by(Turno.id.desc()).first()
+        turno = Turno.query.filter(Turno.estado == 2, func.DATE(Turno.creado) == hoy, Turno.autoridad_id == session['autoridad_id']).order_by(Turno.id.desc()).first()
         
         return render_template('pantalla.html', turno = turno, turnos = turnos)
     return redirect(url_for('login'))
@@ -188,7 +187,7 @@ def atender(accion = None):
                 print('*************************************************** Seleccion de un turno para ATENDER ************************ ')
                 turno = Turno.query.filter(and_(Turno.estado == 1 , func.DATE(Turno.creado) == hoy , Turno.autoridad_id == session['autoridad_id'], or_(Turno.tipo == 1, Turno.tipo == 2))).order_by(Turno.tipo.desc(), Turno.numero.asc()).first()
                 turno.estado = 2
-                turno.VentanillaId = session['ventanilla']
+                turno.ventanilla_id = session['ventanilla']
                 turno.atencion = datetime.now()
                 db.session.commit()
                 return redirect(url_for('concluir'))
@@ -291,25 +290,28 @@ def consultar_turnos():
     return redirect(url_for('login'))
 
 
-@app.route('/crearPDF/', methods = ['GET', 'POST'])
-def crearPDF():
+@app.route('/crearPDF/', methods=['GET', 'POST'])
+@app.route('/crearPDF/<int:turno_id>', methods = ['GET', 'POST'])
+def crearPDF(turno_id = 0):
     entorno = Environment(
         loader=FileSystemLoader('templates'),
         trim_blocks=True,
         lstrip_blocks=True,
     )
     
-    tiempo = datetime.now()
     archivo = 'static/img/img_escudo.png'
     imagen = open(archivo, 'rb')
     imagen_read = imagen.read()
     imagen_64_encode = base64.encodebytes(imagen_read)
 
+    turno = Turno.query.get(turno_id)
+    tiempo = turno.creado
+    
     pdf_plantilla = entorno.get_template("pdf_body.html")
     pdf_html = pdf_plantilla.render(
-        turno=3,
-        fecha=formato_fecha(datetime.now()),
-        hora= f'{tiempo.hour} : {tiempo.minute} : {tiempo.second}' ,
+        turno=turno.numero,
+        fecha=formato_fecha(turno.creado),
+        hora= f'{tiempo.hour}:{tiempo.minute}:{tiempo.second}' ,
         imagen = imagen_64_encode
     )
     
@@ -319,8 +321,11 @@ def crearPDF():
     }
     # Crear archivo PDF 
     try:
-        pdf = pdfkit.from_string(pdf_html, 'turno.pdf', configuration=config, options=options)
-        return "pdf generado correctamente"
+        pdf = pdfkit.from_string(pdf_html, False, configuration=config, options=options)
+        respuesta = make_response(pdf)
+        respuesta.headers['Content-type'] = "application/pdf"
+        respuesta.headers['Content-Disposition']="attachment; filename=turno.pdf"
+        return respuesta
     except IOError as error:
         mensaje = str(error)
         print(f'Error: {mensaje}')

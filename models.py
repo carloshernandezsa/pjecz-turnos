@@ -26,15 +26,26 @@ class Usuarios(db.Model):
     
 
 class Ventanilla(db.Model):
-    VentanillaId = db.Column(db.Integer, primary_key=True)
-    Ventanilla = db.Column(db.Integer)
-    UsuarioId = db.Column(db.Integer)
-    JuzgadoId = db.Column(db.Integer)
-    EstatusId = db.Column(db.Integer)
+    id = db.Column(db.Integer, primary_key=True)
+    autoridad_id = db.Column(db.Integer)
+    numero = db.Column(db.Integer)
+    descripcion = db.Column(db.String(50))
+    creado = db.Column(db.DateTime , nullable=True)
+    usuario_id = db.Column(db.Integer)
+    estatus = db.Column(db.Integer)
     
 class Autoridades(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    distrito_id = db.Column(db.Integer)
     descripcion = db.Column(db.String(50))
     descripcion_corta = db.Column(db.String(50))
-    distrito_id = db.Column(db.Integer)
     clave = db.Column(db.Integer)
+    
+class Departamentos(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100))
+    nombre_corto = db.Column(db.String(50))    
+    
+class Roles(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(30))

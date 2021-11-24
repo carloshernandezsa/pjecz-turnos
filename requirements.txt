@@ -7,5 +7,8 @@ dominate
 visitor
 mysqlclient
 socketio
-flask_socketio
 pdfkit
+Jinja2
+jinja2-fsloader
+SQLAlchemy
+Flask-SocketIO
