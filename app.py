@@ -311,7 +311,8 @@ def crearPDF(turno_id = 0):
     pdf_html = pdf_plantilla.render(
         turno=turno.numero,
         fecha=formato_fecha(turno.creado),
-        hora= f'{tiempo.hour}:{tiempo.minute}:{tiempo.second}' ,
+       
+        hora = tiempo.strftime("%I:%M:%S %p"),
         imagen = imagen_64_encode
     )
     
