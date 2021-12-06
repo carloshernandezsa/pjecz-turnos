@@ -15,3 +15,33 @@ dominate
 # psycopg2
 # visitor -- muestra salida mas legible en consola de JSON
 
+alembic==1.7.5
+appdirs==1.4.4
+bidict==0.21.4
+click==8.0.3
+colorama==0.4.4
+dominate==2.6.0
+Flask==2.0.2
+Flask-Migrate==3.1.0
+Flask-SocketIO==5.1.1
+Flask-SQLAlchemy==2.5.1
+Flask-WTF==1.0.0
+fs==2.4.14
+greenlet==1.1.2
+importlib-metadata==4.8.2
+importlib-resources==5.4.0
+itsdangerous==2.0.1
+Jinja2==3.0.3
+Mako==1.1.6
+MarkupSafe==2.0.1
+mysqlclient==2.1.0
+pdfkit==1.0.0
+python-engineio==4.3.0
+python-socketio==5.5.0
+pytz==2021.3
+six==1.16.0
+SQLAlchemy==1.4.27
+typing_extensions==4.0.1
+Werkzeug==2.0.2
+WTForms==3.0.0
+zipp==3.6.0
