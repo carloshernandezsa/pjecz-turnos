@@ -13,17 +13,6 @@ class Turno(db.Model):
     ventanilla_id = db.Column(db.Integer)
     estado = db.Column(db.Integer)
     comentarios = db.Column(db.String(250))
-    
-class Usuarios(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nombres = db.Column(db.String(45))
-    apellido_paterno = db.Column(db.String(45))
-    apellido_materno = db.Column(db.String(45))
-    usuario = db.Column(db.String(45))
-    password = db.Column(db.String(45))
-    rol_id = db.Column(db.Integer)
-    autoridad_id = db.Column(db.Integer)
-    
 
 class Ventanilla(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -34,6 +23,16 @@ class Ventanilla(db.Model):
     usuario_id = db.Column(db.Integer)
     estatus = db.Column(db.Integer)
     
+class Usuarios(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombres = db.Column(db.String(45))
+    apellido_paterno = db.Column(db.String(45))
+    apellido_materno = db.Column(db.String(45))
+    usuario = db.Column(db.String(45))
+    password = db.Column(db.String(45))
+    rol_id = db.Column(db.Integer)
+    autoridad_id = db.Column(db.Integer)
+        
 class Autoridades(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     distrito_id = db.Column(db.Integer)

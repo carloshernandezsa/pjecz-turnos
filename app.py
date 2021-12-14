@@ -4,7 +4,7 @@ import pprint
 import pdfkit 
 import base64 
 
-from jinja2.loaders import FileSystemLoader  ## impresion estilizada en consola
+from jinja2.loaders import FileSystemLoader  
 from jinja2 import Environment
 
 from flask import Flask, render_template, request, url_for, session, make_response
@@ -27,13 +27,7 @@ csrf = CSRFProtect()
 app = Flask(__name__)
 csrf.init_app(app)
 
-#configuracion de la base de datos
-
-#USER_DB = "postgres"
-#PASS_DB = "admin"
-#URL_DB = "localhost"
-#NAME_DB = "pjecz_sistema_turnos"
-#FULL_URL_DB = f'mysql://{USER_DB}:{PASS_DB}@{URL_DB}/{NAME_DB}'
+# Configuracion de la base de datos
 USER_DB = "root"
 PASS_DB = ""
 URL_DB = "localhost"
@@ -253,7 +247,7 @@ def nuevo(accion = None):
                 db.session.commit()
                 print("se agregara un nuevo turno en la tabla")
                 accion=""
-                #handelMessage({'id' : 0, 'accion' : '', 'usuario' : session['usuario']})
+
                 socketio.send('message')
                 return redirect(url_for('nuevo'))
         
