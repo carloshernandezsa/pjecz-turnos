@@ -142,7 +142,7 @@ def pantalla():
         hoy = datetime.today().strftime('%Y-%m-%d')
         turnos = Turno.query.filter(Turno.estado <= 2 , func.DATE(Turno.creado) == hoy, Turno.autoridad_id == session['autoridad_id'] ).order_by(Turno.id).limit(8).all() 
         #registros = Turno.query.filter(Turno.ventanilla_id == None , func.DATE(Turno.creado) == hoy ).order_by(Turno.id).limit(5).count()
-        turno = Turno.query.filter(Turno.estado == 2, func.DATE(Turno.creado) == hoy, Turno.autoridad_id == session['autoridad_id']).order_by(Turno.id.desc()).first()
+        turno = Turno.query.filter(Turno.estado == 2, func.DATE(Turno.creado) == hoy, Turno.autoridad_id == session['autoridad_id']).order_by(Turno.atencion.desc()).first()
         
         return render_template('pantalla.html', turno = turno, turnos = turnos)
     return redirect(url_for('login'))
