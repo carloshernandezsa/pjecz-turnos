@@ -1,0 +1,14 @@
+Flask
+Flask-Migrate
+psycopg2
+WTForms
+Flask-WTF
+dominate
+visitor
+mysqlclient
+socketio
+pdfkit
+Jinja2
+jinja2-fsloader
+SQLAlchemy
+Flask-SocketIO

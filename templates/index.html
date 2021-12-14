@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block head %}
+	{{ super() }}
+{% endblock %}
+{% block content %}
+    <div class="content">
+        <div class="row p-5">
+            <div class="col-md-8 offset-2">
+                <div class="card">
+                    <div class="card-header">
+                        <img src="http://localhost:5000/static/img/img_escudo.png" class="img-fluid">
+                    </div>
+                    <div class="card-body text-center p-5">
+                        <h2>Sistema de Turnos</h2>
+                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ab accusantium adipisci autem, commodi cum cumque debitis delectus doloremque dolores doloribus illo ipsam iure labore laudantium maxime minima necessitatibus neque nesciunt nihil obcaecati, odio optio perspiciatis possimus, sed sequi sint velit voluptatibus. Ab ipsa ipsum, laboriosam numquam qui sequi tenetur voluptates.</p>
+                    </div>
+                    <div class="card-footer">
+                        <a class="btn btn-warning float-right" href="{{pagina}}">Continuar</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}
