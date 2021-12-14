@@ -27,19 +27,12 @@ csrf = CSRFProtect()
 app = Flask(__name__)
 csrf.init_app(app)
 
-'''configuracion de la base de datos pjecz_sistema_turnos'''
+# Configuracion de la base de datos
 USER_DB = "root"
 PASS_DB = ""
 URL_DB = "localhost"
 NAME_DB = "pjecz_sistema_turnos"
 FULL_URL_DB = f"mysql://{USER_DB}:{PASS_DB}@{URL_DB}/{NAME_DB}"
-
-''' Configuracion de la base de datos pjecz_plataforma_web '''
-#USER_DB = "root"
-#PASS_DB = ""
-#URL_DB = "localhost"
-#NAME_DB = "pjecz_plataforma_web"
-#FULL_URL_DB = f'mysql://{USER_DB}:{PASS_DB}@{URL_DB}/{NAME_DB}'
 
 app.config['SQLALCHEMY_DATABASE_URI'] = FULL_URL_DB
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -254,6 +247,7 @@ def nuevo(accion = None):
                 db.session.commit()
                 print("se agregara un nuevo turno en la tabla")
                 accion=""
+
                 socketio.send('message')
                 return redirect(url_for('nuevo'))
         
