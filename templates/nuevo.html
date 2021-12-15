@@ -78,7 +78,7 @@
 										{% if datos.estado == 1 %}
 										<td colspan="2">En espera</td>
 										{% endif %}
-										<td><a href="{{url_for('crearPDF')}}{{datos.id}}"><input type="button" class="btn btn-warning" value="Imprimir turno"></a></td>
+										<td><a href="{{url_for('crearPDF')}}{{datos.id}}"><button type="button" class="btn btn-danger">Imprimir turno</button></a></td>
 									</tr>
 									{% endfor %}
 								</tbody>
