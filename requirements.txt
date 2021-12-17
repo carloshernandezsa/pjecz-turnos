@@ -1,19 +1,5 @@
 black
 Flask
-<<<<<<< HEAD
-Flask-Migrate
-Flask-SocketIO
-Flask-WTF
-Flask-Login
-SQLAlchemy
-Jinja2==3.0.3
-pdfkit
-mysqlclient
-WTForms
-dominate
-passlib
-
-=======
 Flask-Moment
 Flask-Login
 Flask-SQLAlchemy
@@ -28,4 +14,3 @@ PyMySQL
 SQLAlchemy
 SQLAlchemy-Utils
 WTForms >=2.3.3,<3.0.0
->>>>>>> 1e8bc5840b74c0f0ba280b1c7005cfafbb045ae7
