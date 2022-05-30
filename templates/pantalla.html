@@ -8,11 +8,6 @@
 			<img src="/static/img/img_escudo.png" class="img-fluid" style="max-width: 500px;">
 		</div>
 	  	<div class="container-fluid p-5"  >
-			<!--audio  autoplay>
-			  <source src="static/audio/Positivo.mp3.ogg" type="audio/ogg">
-			  <source src="http://localhost:5000/static/audio/Positivo.mp3" type="audio/mpeg">
-			  Tu navegador no soporta el elemento "audio".
-			</audio-->
   			<div class="row" id="contenidoTurnos">
   				<div class="col-md-5" >
   					<table width="80%" border="0" style="margin:0 auto">
@@ -55,9 +50,16 @@
   					<div class="row" id="divTurnoActual">
   						<div class="col-md-12 text-center">
 		  					<label class="bg-danger w-100 text-white font-weight-bold display-4 img-rounded">TURNO</label><br>
-					  		<label class="pb-5 m-0 text-danger" style="font-size: 15vw; font-weight: bold; line-height:1; " id="datoTurno">{{turno.numero}}</label><br>
+					  		<label class="pb-5 m-0 text-danger" style="font-size: 15vw; font-weight: bold; line-height:1; min-height:1.3em " id="datoTurno">{{turno.numero}}</label><br>
 					  		<label class="bg-info w-100 text-white font-weight-bold mt-1" style="font-size: 3vh">VENTANILLA</label><br>
 					  		<label class="p-0 m-0 text-info" style=" font-size: 15vw; font-weight: bold; line-height: .8; " id="datoVentanilla">{{turno.ventanilla_id}}</label>
+							{% if sonido %}
+								<audio autoplay>
+									<source src="static/audio/Positivo.mp3" type="audio/ogg">
+									<source src="http://localhost:5000/static/audio/Positivo.mp3" type="audio/mpeg">
+									Tu navegador no soporta el elemento "audio".
+								</audio>
+							{% endif %}
   						</div>
   					</div>
   				</div>

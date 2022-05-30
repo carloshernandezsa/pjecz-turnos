@@ -54,6 +54,7 @@ socketio.run(app)
 
 # LLave secreta para sesiones
 app.secret_key = "Mi_llave_secret@"
+
         
 #ejecutar en consola los siguientes commandos
 # flask db init
@@ -67,7 +68,7 @@ def handelMessage(msg):
     if(int(msg['usuario']) != session['ventanilla']):
         msg['accion']=""    
     msg['usuarioFirmado'] = session['ventanilla']
-    print('*************************************** Inicia la propagacion del mensaje ***************************************')
+    #'*************************************** Inicia la propagacion del mensaje ***************************************')
     send(msg , broadcast=True)
 
 @app.route('/')
@@ -88,6 +89,7 @@ def login():
     session['estatusTurno'] = {1:"En espera",2:"Atendiendo",3:"Atendido",4:"Cancelado"} 
     session['juzgados'] = {1:"Oficialía Común de Partes Saltillo",3:"Oficialía Común de Partes Torreón",4:"Oficialía Común de Partes Monclova",5:"Oficialía Común de Partes Río Grande",7:"Torreón Familiar",8:"Torreón Mercantil"}
     
+    session['turnos_anunciados'] = []
 
     if request.method=="POST":
         #Omitimos validacion de usuario y password
@@ -138,13 +140,24 @@ def logout():
 @app.route('/pantalla/')
 def pantalla():
     if 'rol' in session and session['rol']==5: # Rol de usuario de Pantalla
+            
         #Fecha actual
         hoy = datetime.today().strftime('%Y-%m-%d')
         turnos = Turno.query.filter(Turno.estado <= 2 , func.DATE(Turno.creado) == hoy, Turno.autoridad_id == session['autoridad_id'] ).order_by(Turno.id).limit(8).all() 
         #registros = Turno.query.filter(Turno.ventanilla_id == None , func.DATE(Turno.creado) == hoy ).order_by(Turno.id).limit(5).count()
         turno = Turno.query.filter(Turno.estado == 2, func.DATE(Turno.creado) == hoy, Turno.autoridad_id == session['autoridad_id']).order_by(Turno.atencion.desc()).first()
         
-        return render_template('pantalla.html', turno = turno, turnos = turnos)
+        sonido_valor = False      
+        if turno:              
+            if turno.numero in session['turnos_anunciados']:
+                sonido_valor = False 
+            else:
+                sonido_valor = True
+                variable_turnos = session['turnos_anunciados']
+                variable_turnos.append(turno.numero)
+                session['turnos_anunciados'] = variable_turnos
+  
+        return render_template('pantalla.html', turno = turno, turnos = turnos, sonido = sonido_valor) 
     return redirect(url_for('login'))
 
 
@@ -207,14 +220,18 @@ def concluir(id = 0):
                 turno.estado = 3
                 turno.termino = datetime.now()
                 db.session.commit()
-                return redirect(url_for('atender'))
+                return redirect(url_for('concluir'))
             except:
                 print("error al marcar turno como ATENDIDO (3)")
         try:
             turnos = Turno.query.filter(Turno.estado == 2, func.DATE(Turno.creado) == hoy, Turno.ventanilla_id == session['ventanilla']).order_by(Turno.id).limit(5).all()
+            numero_registros = Turno.query.filter(Turno.estado == 2, func.DATE(Turno.creado) == hoy, Turno.ventanilla_id == session['ventanilla']).count()
         except:
             turnos = {"success":"sin registros"}
-        return render_template('concluir.html', turnos = turnos)
+        if(numero_registros>0): 
+            return render_template('concluir.html', turnos = turnos)
+        return redirect(url_for('atender'))
+        
     return redirect(url_for('login'))
 
 @app.route('/nuevo/', methods=['GET','POST'])
@@ -222,8 +239,7 @@ def concluir(id = 0):
 def nuevo(accion = None):
     if 'rol' in session and session['rol'] == 1:  # Rol de usuario de Recepción
         if(request.method == 'POST'):
-            print(f' ***********---------------------- Inicia proceso de alta {request.form["accion"]}')
-            #print(f'######################  Accion: {accion} , Usuario Firmado:{session["usuario"]} ')
+     
             if(request.form['accion']=="Nuevo turno"):
                 
                 #Registrar nuevo renglon en la tabla de turnos
@@ -269,18 +285,16 @@ def consultar_turnos():
     if 'usuario' in session:
         # Fecha actual
         hoy = datetime.today().strftime('%Y-%m-%d')
-        print('************************* inicia consulta de turnos por dia *****************************')
         turnos = Turno.query.filter(Turno.estado <= 2, func.DATE(Turno.creado) == hoy, Turno.autoridad_id == session['autoridad_id']).order_by(Turno.id).all()
         data = {}
         pp = pprint.PrettyPrinter(indent=4)
         if(turnos):
             for datos in turnos:
                 #pp.pprint(datos.__dict__)
-                print('registro')
+                print(f'registro: {datos.id}')
             return turnos 
             
         print(type(turnos))
-        #print(json.dumps(objeto))    
     return redirect(url_for('login'))
 
 
